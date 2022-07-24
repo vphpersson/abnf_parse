@@ -166,8 +166,9 @@ def _initialize_abnf_ruleset():
             ),
             RepetitionNode(node=CORE_RULESET['DIGIT'], min_value=1)
         )
-
     })
+
+    # TODO: Add support for `#` operator in `repeat`? (Not sure if it is official)
 
     abnf_ruleset['case-sensitive-string'] = ConcatenationNode(
         LiteralNode(value=b'%s'),

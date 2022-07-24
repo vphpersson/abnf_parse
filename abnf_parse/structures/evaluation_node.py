@@ -15,6 +15,15 @@ class EvaluationNode(ABC):
         self.name = name
 
     def evaluate(self, source: ByteString | memoryview, offset: int = 0) -> MatchNode | None:
+        """
+        Evaluate if the input matches the grammar as constituted by the current node, which represents a tree.
+
+        The input is operated on as a `memoryview` in order to avoid copies when passing and reading it.
+
+        :param source: The input to be evaluated.
+        :param offset: The offset at which to start reading the input.
+        :return: A `MatchNode` if the input matches, otherwise `None`.
+        """
 
         source_memoryview = memoryview(source)
 
@@ -177,7 +186,18 @@ class RepetitionNode(EvaluationNode):
 
         match_stack = []
 
-        def horse(iteration_offset: int):
+        def offset_iterator(iteration_offset: int) -> Iterator[MatchNode]:
+            """
+            Try to find a match on a given offset. If a match was found, try to find successive matches after that
+            match's end offset.
+
+            Yield if a match fulfills the maximum repetition value. Store observed matches of lesser length, to be
+            yielded as fallbacks.
+
+            :param iteration_offset: The offset at which to try to find a match.
+            :return: An iterator yielding match nodes of the maximum length.
+            """
+
             for iteration_match_node in self.node._evaluate(source=source, offset=iteration_offset):
                 match_stack.append(iteration_match_node)
 
@@ -196,10 +216,10 @@ class RepetitionNode(EvaluationNode):
                 else:
                     if len(match_stack) >= self.min_value:
                         match_len_to_match_list[len(match_stack)].append(match_node)
-                    yield from horse(iteration_offset=match_node.end_offset)
+                    yield from offset_iterator(iteration_offset=match_node.end_offset)
                     match_stack.pop()
 
-        yield from horse(iteration_offset=offset)
+        yield from offset_iterator(iteration_offset=offset)
 
         for match_len in sorted(match_len_to_match_list.keys(), reverse=True):
             for match_node in match_len_to_match_list[match_len]:
