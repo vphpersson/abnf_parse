@@ -13,9 +13,6 @@ class MatchNode:
     source: memoryview
     children: list[MatchNode] = field(default_factory=list)
 
-    def __len__(self) -> int:
-        return self.end_offset - self.start_offset
-
     @cached_property
     def _get_field_map(self):
         """
@@ -81,7 +78,11 @@ class MatchNode:
 
         :return: The byte value corresponding to the match.
         """
+
         return self.source[self.start_offset:self.end_offset].tobytes()
+
+    def __len__(self) -> int:
+        return self.end_offset - self.start_offset
 
     def __str__(self) -> str:
         return self.get_value().decode()
