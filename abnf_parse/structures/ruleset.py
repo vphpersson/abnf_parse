@@ -34,7 +34,7 @@ class Ruleset(UserDict):
         from abnf_parse.rulesets import ABNF_RULESET
 
         match_node: MatchNode | None = ABNF_RULESET['rulelist'].evaluate(source=source)
-        if not MatchNode:
+        if not match_node:
             return None
 
         for rule_node in match_node.get_field(name='rule', as_list=True):

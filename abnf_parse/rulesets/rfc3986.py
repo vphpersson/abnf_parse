@@ -1,0 +1,43 @@
+from abnf_parse.structures.ruleset import Ruleset
+
+
+RFC3986_RULESET = Ruleset.from_source(
+    source=(
+        b'sub-delims = "!" / "$" / "&" / "\'" / "(" / ")" / "*" / "+" / "," / ";" / "="\r\n'
+        b'gen-delims = ":" / "/" / "?" / "#" / "[" / "]" / "@"\r\n'
+        b'reserved = gen-delims / sub-delims\r\n'
+        b'unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"\r\n'
+        b'pct-encoded = "%" HEXDIG HEXDIG\r\n'
+        b'pchar = unreserved / pct-encoded / sub-delims / ":" / "@"\r\n'
+        b'fragment = *( pchar / "/" / "?" )\r\n'
+        b'query = *( pchar / "/" / "?" )\r\n'
+        b'segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" )\r\n'
+        b'segment-nz = 1*pchar\r\n'
+        b'segment = *pchar\r\n'
+        b'path-empty = ""\r\n'
+        b'path-rootless = segment-nz *( "/" segment )\r\n'
+        b'path-noscheme = segment-nz-nc *( "/" segment )\r\n'
+        b'path-absolute = "/" [ segment-nz *( "/" segment ) ]\r\n'
+        b'path-abempty = *( "/" segment )\r\n'
+        b'path = path-abempty / path-absolute / path-noscheme / path-rootless / path-empty\r\n'
+        b'reg-name = *( unreserved / pct-encoded / sub-delims)\r\n'
+        b'dec-octet = DIGIT / %x31-39 DIGIT / "1" 2DIGIT / "2" %x30-34 DIGIT / "25" %x30-35\r\n'
+        b'IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet\r\n'
+        b'h16 = 1*4HEXDIG\r\n'
+        b'ls32 = ( h16 ":" h16 ) / IPv4address\r\n'
+        b'IPv6address = 6( h16 ":" ) ls32 / "::" 5( h16 ":" ) ls32 / [ h16 ] "::" 4( h16 ":" ) ls32 / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32 / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32 / [ *3( h16 ":" ) h16 ] "::" h16 ":" ls32 / [ *4( h16 ":" ) h16 ] "::" ls32 / [ *5( h16 ":" ) h16 ] "::" h16 / [ *6( h16 ":" ) h16 ] "::"\r\n'
+        b'IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )\r\n'
+        b'IP-literal = "[" ( IPv6address / IPvFuture ) "]"\r\n'
+        b'port = *DIGIT\r\n'
+        b'host = IP-literal / IPv4address / reg-name\r\n'
+        b'userinfo = *( unreserved / pct-encoded / sub-delims / ":" )\r\n'
+        b'authority = [ userinfo "@" ] host [ ":" port ]\r\n'
+        b'scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )\r\n'
+        b'relative-part = "//" authority path-abempty / path-absolute / path-noscheme / path-empty\r\n'
+        b'relative-ref = relative-part [ "?" query ] [ "#" fragment ]\r\n'
+        b'hier-part = "//" authority path-abempty / path-absolute / path-rootless / path-empty\r\n'
+        b'absolute-URI = scheme ":" hier-part [ "?" query ]\r\n'
+        b'URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]\r\n'
+        b'URI-reference = URI / relative-ref\r\n'
+    )
+)
