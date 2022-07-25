@@ -46,7 +46,7 @@ start_line_match = RFC9112_RULESET['start-line'].evaluate(source=b'HTTP/1.1 200 
 
 print(
     f'The start line is a "{start_line_match.children[0].name}".\n'
-    f'The version is "{next(start_line_match.search(name="HTTP-version")).get_value().decode()}".'
+    f'The version is "{next(start_line_match.search(name="HTTP-version"))}".'
 )
 ```
 

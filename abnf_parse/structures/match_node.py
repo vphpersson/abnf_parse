@@ -82,3 +82,9 @@ class MatchNode:
         :return: The byte value corresponding to the match.
         """
         return self.source[self.start_offset:self.end_offset].tobytes()
+
+    def __str__(self) -> str:
+        return self.get_value().decode()
+
+    def __bytes__(self) -> bytes:
+        return self.get_value()
