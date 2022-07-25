@@ -15,6 +15,7 @@ ipv6_ruleset = Ruleset.from_source(
         b'IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet\r\n'
         b'h16 = 1*4HEXDIG\r\n'
         b'ls32 = ( h16 ":" h16 ) / IPv4address\r\n'
+        b'IPv6address = 6( h16 ":" ) ls32 / "::" 5( h16 ":" ) ls32 / [ h16 ] "::" 4( h16 ":" ) ls32 / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32 / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32 / [ *3( h16 ":" ) h16 ] "::" h16 ":" ls32 / [ *4( h16 ":" ) h16 ] "::" ls32 / [ *5( h16 ":" ) h16 ] "::" h16 / [ *6( h16 ":" ) h16 ] "::"\r\n'
     )
 )
 
