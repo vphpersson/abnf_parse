@@ -16,12 +16,19 @@ class Ruleset(UserDict):
     def _retrieve_map(self):
         return ChainMap(self.data, self.CORE_RULESET or {})
 
-    def __setitem__(self, key: str, value: EvaluationNode):
-        if key != value.name and value.name != value.__class__.__name__:
-            value = copy(value)
+    def __setitem__(self, rule_name: str, rule: EvaluationNode):
+        # `rule` could be a reference to an already-named rule. In that case, that rule's node should not have its name
+        # changed. Instead, a shallow copy is created that is assigned the new name.
+        #
+        # (1) Check if the rule's name is the same as the name to be assigned the rule. This is typically the case
+        # when importing a rule from another ruleset. In this case, that rule can be reused.
+        # (2) Check if the rule is unnamed, i.e. has the same name as its class. There is no reason to copy an unnamed
+        # rule.
+        if rule_name != rule.name and rule.name != rule.__class__.__name__:
+            rule = copy(rule)
 
-        value.name = key
-        super().__setitem__(key, value)
+        rule.name = rule_name
+        super().__setitem__(rule_name, rule)
 
     def __getitem__(self, item: str) -> EvaluationNode:
         # If the rule cannot be found in the current ruleset, a lookup will be performed in the core ruleset.
@@ -174,9 +181,7 @@ def _node_from_alternation(alternation, ruleset: Ruleset) -> EvaluationNode:
     nodes_to_be_alternated = []
 
     for concatenation in (first_concatenation, *later_concatenations):
-        nodes_to_be_concatenated = []
-        for node in _nodes_from_concatenation(concatenation=concatenation, ruleset=ruleset):
-            nodes_to_be_concatenated.append(node)
+        nodes_to_be_concatenated = list(_nodes_from_concatenation(concatenation=concatenation, ruleset=ruleset))
         nodes_to_be_alternated.append(
             nodes_to_be_concatenated[0] if len(nodes_to_be_concatenated) == 1
             else ConcatenationNode.from_nodes(*nodes_to_be_concatenated)
@@ -186,5 +191,3 @@ def _node_from_alternation(alternation, ruleset: Ruleset) -> EvaluationNode:
         return nodes_to_be_alternated[0]
     else:
         return AlternationNode(*nodes_to_be_alternated)
-
-
