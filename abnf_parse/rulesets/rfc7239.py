@@ -12,6 +12,7 @@ from abnf_parse.rulesets.rfc3986 import RFC3986_RULESET
 RFC7239_RULESET = Ruleset({
     'token': RFC9110_RULESET['token'],
     'quoted-string': RFC9110_RULESET['quoted-string'],
+    'OWS': RFC9110_RULESET['OWS'],
     'IPv4address': RFC3986_RULESET['IPv4address'],
     'IPv6address': RFC3986_RULESET['IPv6address']
 }).update_from_source(
@@ -19,7 +20,7 @@ RFC7239_RULESET = Ruleset({
         b'value = token / quoted-string\r\n'
         b'forwarded-pair = token "=" value\r\n'
         b'forwarded-element = [ forwarded-pair ] *( ";" [ forwarded-pair ] )\r\n'
-        b'Forwarded = forwarded-element *( "," forwarded-element )\r\n'
+        b'Forwarded = forwarded-element *( OWS "," OWS forwarded-element )\r\n'
         
         b'obfport = "_" 1*(ALPHA / DIGIT / "." / "_" / "-")\r\n'
         b'port = 1*5DIGIT\r\n'
