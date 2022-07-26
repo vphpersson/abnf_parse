@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterator
+from collections.abc import Container
 from functools import cached_property
 from collections import deque
 
@@ -38,7 +39,7 @@ class MatchNode:
 
     def search(
         self,
-        name: str,
+        name: str | Container,
         max_depth: int | None = None,
         search_match: bool = False
     ) -> Iterator[MatchNode]:
@@ -53,6 +54,8 @@ class MatchNode:
         :return: An iterator yielding nodes having the provided name.
         """
 
+        names = {name} if isinstance(name, str) else name
+
         current_depth = 0
         remaining_nodes_at_depth = 1
         next_depth_count = len(self.children)
@@ -61,7 +64,7 @@ class MatchNode:
         while queue:
             current_node: MatchNode = queue.popleft()
 
-            names_matches = current_node.name == name
+            names_matches = current_node.name in names
             if names_matches:
                 yield current_node
 

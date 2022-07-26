@@ -5,9 +5,12 @@ from abnf_parse.rulesets.rfc3986 import RFC3986_RULESET
 # NOTE: Only a subset has been implemented so far.
 
 RFC9110_RULESET = Ruleset({
-    'segment': RFC3986_RULESET['segment']
+    'segment': RFC3986_RULESET['segment'],
+    'uri-host': RFC3986_RULESET['host'],
+    'port': RFC3986_RULESET['port']
 }).update_from_source(
     source=(
+        b'Host = uri-host [ ":" port ]\r\n'
         b'OWS = *( SP / HTAB )\r\n'
         b'RWS = 1*( SP / HTAB )\r\n'
         b'BWS = OWS\r\n'

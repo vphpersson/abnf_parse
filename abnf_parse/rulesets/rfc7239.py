@@ -6,6 +6,9 @@ from abnf_parse.rulesets.rfc3986 import RFC3986_RULESET
 # NOTE: The RFC refers to RFC7230 for the definitions of "token" and "quoted-string",
 # but it has been deprecated by RFC9110. The affected definitions are the same.
 
+# NOTE: `Forwarded` is defined `Forwarded = 1#forwarded-element` in the RFC, but "# rules" do not seem to be officially
+# defined.
+
 RFC7239_RULESET = Ruleset({
     'token': RFC9110_RULESET['token'],
     'quoted-string': RFC9110_RULESET['quoted-string'],
