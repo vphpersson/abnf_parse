@@ -36,24 +36,45 @@ class MatchNode:
 
         return field_map
 
-    def search(self, name: str) -> Iterator[MatchNode]:
+    def search(
+        self,
+        name: str,
+        max_depth: int | None = None,
+        search_match: bool = False
+    ) -> Iterator[MatchNode]:
         """
-        Search a node recursively for nodes having the provided name.
+        Search a node recursively for nodes having the provided name and yield them.
 
         The search is performed breadth first.
 
         :param name: The name of nodes to be yielded.
-        :return: None
+        :param max_depth: The maximum depth at which to search for nodes.
+        :param search_match: Whether to search a match's children.
+        :return: An iterator yielding nodes having the provided name.
         """
+
+        current_depth = 0
+        remaining_nodes_at_depth = 1
+        next_depth_count = len(self.children)
 
         queue: deque[MatchNode] = deque([self])
         while queue:
             current_node: MatchNode = queue.popleft()
 
-            if current_node.name == name:
+            names_matches = current_node.name == name
+            if names_matches:
                 yield current_node
-            else:
+
+            remaining_nodes_at_depth -= 1
+
+            if (max_depth is None or current_depth != max_depth) and not (names_matches and not search_match):
                 queue.extend(current_node.children)
+                next_depth_count += len(current_node.children)
+
+            if remaining_nodes_at_depth == 0:
+                current_depth += 1
+                remaining_nodes_at_depth = next_depth_count
+                next_depth_count = 0
 
     def get_field(self, name: str, as_list: bool = False) -> MatchNode | list[MatchNode] | None:
         """
@@ -86,6 +107,9 @@ class MatchNode:
 
     def __str__(self) -> str:
         return self.get_value().decode()
+
+    def __repr__(self) -> str:
+        return f'{self.name}: {self}'
 
     def __bytes__(self) -> bytes:
         return self.get_value()
