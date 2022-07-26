@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Iterator, ByteString
 from functools import cached_property, partial
 from collections import ChainMap, UserDict
+from copy import copy
 
 from abnf_parse.structures.evaluation_node import EvaluationNode, AlternationNode, RangedLiteralNode, LiteralNode, \
     ConcatenationNode, RepetitionNode, OptionNode
@@ -16,6 +17,9 @@ class Ruleset(UserDict):
         return ChainMap(self.data, self.CORE_RULESET or {})
 
     def __setitem__(self, key: str, value: EvaluationNode):
+        if key != value.name and value.name != value.__class__.__name__:
+            value = copy(value)
+
         value.name = key
         super().__setitem__(key, value)
 

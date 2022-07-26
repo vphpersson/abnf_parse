@@ -10,7 +10,6 @@ RFC9110_RULESET = Ruleset({
     'port': RFC3986_RULESET['port']
 }).update_from_source(
     source=(
-        b'Host = uri-host [ ":" port ]\r\n'
         b'OWS = *( SP / HTAB )\r\n'
         b'RWS = 1*( SP / HTAB )\r\n'
         b'BWS = OWS\r\n'
@@ -25,7 +24,14 @@ RFC9110_RULESET = Ruleset({
         b'token = 1*tchar\r\n'
         b'field-name = token\r\n'
         b'absolute-path = 1*( "/" segment )\r\n'
-        b'RWS = 1*( SP / HTAB )\r\n'
-        b'obs-text = %x80-FF\r\n'
+        b'parameter-value = ( token / quoted-string )\r\n'
+        b'parameter-name = token\r\n'
+        b'parameter = parameter-name "=" parameter-value\r\n'
+        b'parameters = *( OWS ";" OWS [ parameter ] )\r\n'
+        b'Host = uri-host [ ":" port ]\r\n'
+        b'subtype = token\r\n'
+        b'type = token\r\n'
+        b'media-type = type "/" subtype parameters\r\n'
+        b'Content-Type = media-type\r\n'
     )
 )
