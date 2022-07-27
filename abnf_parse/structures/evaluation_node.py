@@ -2,19 +2,27 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ByteString, Iterator
 from itertools import pairwise
-from collections import defaultdict
 from re import compile as re_compile, Pattern as RePattern, escape as re_escape, MULTILINE as RE_MULTILINE,\
     IGNORECASE as RE_IGNORECASE
 
 from abnf_parse.structures.match_node import MatchNode
+from abnf_parse.exceptions import NoMatchError, BacktrackingLimitReachedError
 
 
 class EvaluationNode(ABC):
 
+    _BACKTRACKING_LIMIT: int | None = None
+
     def __init__(self, name: str):
         self.name = name
 
-    def evaluate(self, source: ByteString | memoryview, offset: int = 0) -> MatchNode | None:
+    def evaluate(
+        self,
+        source: ByteString | memoryview,
+        offset: int = 0,
+        backtracking_limit: int | bool | None = True,
+        exception_on_no_match: bool = True
+    ) -> MatchNode | None:
         """
         Evaluate if the input matches the grammar as constituted by the current node, which represents a tree.
 
@@ -22,14 +30,30 @@ class EvaluationNode(ABC):
 
         :param source: The input to be evaluated.
         :param offset: The offset at which to start reading the input.
+        :param backtracking_limit: A limit for maximum number of backtracks that are allowed in a repetition rule.
+            `int`: A numeric limit. `True`: Use a limit equal to the length of the input to be parsed. `False` or
+            `None`: Do not use a backtracking limit.
+        :param exception_on_no_match: Whether to raise an exception if the source data does not match the rule.
         :return: A `MatchNode` if the input matches, otherwise `None`.
         """
+
+        if backtracking_limit is None:
+            EvaluationNode._BACKTRACKING_LIMIT = None
+        elif isinstance(backtracking_limit, bool):
+            EvaluationNode._BACKTRACKING_LIMIT = (len(source) - offset) if backtracking_limit else None
+        elif isinstance(backtracking_limit, int):
+            EvaluationNode._BACKTRACKING_LIMIT = backtracking_limit
+        else:
+            raise ValueError(f'Unexpected backtrack limit type: {type(backtracking_limit)}')
 
         source_memoryview = memoryview(source)
 
         for match_node in self._evaluate(source=source_memoryview, offset=offset):
             if match_node.end_offset == len(source_memoryview):
                 return match_node
+
+        if exception_on_no_match:
+            raise NoMatchError(rule_name=self.name, source=source_memoryview, offset=offset)
 
         return None
 
@@ -181,10 +205,12 @@ class RepetitionNode(EvaluationNode):
         self.min_value = min_value
         self.max_value = max_value
 
+        self._backtrack_count = 0
+
     def _evaluate(self, source: memoryview, offset: int = 0) -> Iterator[MatchNode]:
-        match_len_to_match_list: dict[int, list[MatchNode]] = defaultdict(list)
 
         match_stack = []
+        backtracking_count = 0
 
         def offset_iterator(iteration_offset: int) -> Iterator[MatchNode]:
             """
@@ -209,21 +235,28 @@ class RepetitionNode(EvaluationNode):
                     children=list(match_stack)
                 )
 
-                if len(match_stack) == self.max_value:
+                if len(match_stack) == self.max_value or match_node.end_offset == len(source):
                     yield match_node
                     match_stack.pop()
                     continue
                 else:
-                    if len(match_stack) >= self.min_value:
-                        match_len_to_match_list[len(match_stack)].append(match_node)
                     yield from offset_iterator(iteration_offset=match_node.end_offset)
+                    if len(match_stack) >= self.min_value:
+                        yield match_node
                     match_stack.pop()
 
-        yield from offset_iterator(iteration_offset=offset)
+                    nonlocal backtracking_count
+                    backtracking_count += 1
+                    if self._BACKTRACKING_LIMIT is not None and backtracking_count >= self._BACKTRACKING_LIMIT:
+                        raise BacktrackingLimitReachedError(
+                            rule_name=self.node.name,
+                            source=source,
+                            offset=iteration_offset,
+                            count=backtracking_count,
+                            limit=self._BACKTRACKING_LIMIT
+                        )
 
-        for match_len in sorted(match_len_to_match_list.keys(), reverse=True):
-            for match_node in match_len_to_match_list[match_len]:
-                yield match_node
+        yield from offset_iterator(iteration_offset=offset)
 
         if self.min_value == 0:
             yield MatchNode(

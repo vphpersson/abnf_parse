@@ -7,7 +7,7 @@ An ABNF parsing library.
 ### Provide your own rules
 
 ```python
-from abnf_parse.rulesets import Ruleset
+from abnf_parse.structures.ruleset import Ruleset
 
 ipv6_ruleset = Ruleset.from_source(
     source=(
