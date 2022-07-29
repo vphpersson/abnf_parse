@@ -36,7 +36,9 @@ RFC9112_RULESET = Ruleset({
         b'authority-form = uri-host ":" port\r\n'
         b'absolute-form = absolute-URI\r\n'
         b'origin-form = absolute-path [ "?" query ]\r\n'
-        b'request-target = origin-form / absolute-form / authority-form / asterisk-form\r\n'
+        # NOTE: In the RFC the order is different. But some input that is intended to match "authority-form"
+        # will also match "absolute-form". "authority-form" is more strict, so I moved it first.
+        b'request-target = origin-form / authority-form / absolute-form / asterisk-form\r\n'
         b'method = token\r\n'
         b'request-line = method SP request-target SP HTTP-version\r\n'
         b'start-line = request-line / status-line\r\n'
