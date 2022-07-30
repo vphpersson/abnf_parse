@@ -33,5 +33,7 @@ RFC9110_RULESET = Ruleset({
         b'type = token\r\n'
         b'media-type = type "/" subtype parameters\r\n'
         b'Content-Type = media-type\r\n'
+        b'connection-option = token\r\n'
+        b'Connection = connection-option *( OWS "," OWS connection-option )\r\n'
     )
 )
