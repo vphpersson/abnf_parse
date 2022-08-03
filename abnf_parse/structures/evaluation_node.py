@@ -18,7 +18,7 @@ class EvaluationNode(ABC):
 
     def evaluate(
         self,
-        source: ByteString | memoryview,
+        source: ByteString | memoryview | str,
         offset: int = 0,
         backtracking_limit: int | bool | None = True,
         exception_on_no_match: bool = True
@@ -45,6 +45,9 @@ class EvaluationNode(ABC):
             EvaluationNode._BACKTRACKING_LIMIT = backtracking_limit
         else:
             raise ValueError(f'Unexpected backtrack limit type: {type(backtracking_limit)}')
+
+        if isinstance(source, str):
+            source = source.encode(encoding='charmap')
 
         source_memoryview = memoryview(source)
 
@@ -209,54 +212,60 @@ class RepetitionNode(EvaluationNode):
 
     def _evaluate(self, source: memoryview, offset: int = 0) -> Iterator[MatchNode]:
 
-        match_stack = []
+        match_stack: list[MatchNode] = []
         backtracking_count = 0
 
-        def offset_iterator(iteration_offset: int) -> Iterator[MatchNode]:
-            """
-            Try to find a match on a given offset. If a match was found, try to find successive matches after that
-            match's end offset.
+        queue = [self.node._evaluate(source=source, offset=offset)]
 
-            Yield if a match fulfills the maximum repetition value. Store observed matches of lesser length, to be
-            yielded as fallbacks.
+        while queue:
+            current_iterator: Iterator[MatchNode] = queue.pop()
 
-            :param iteration_offset: The offset at which to try to find a match.
-            :return: An iterator yielding match nodes of the maximum length.
-            """
+            iteration_match_node: MatchNode | None = next(current_iterator, None)
 
-            for iteration_match_node in self.node._evaluate(source=source, offset=iteration_offset):
-                match_stack.append(iteration_match_node)
+            if iteration_match_node is None:
+                if not match_stack:
+                    continue
 
-                match_node = MatchNode(
+                if len(match_stack) >= self.min_value:
+                    yield MatchNode(
+                        name=self.name,
+                        start_offset=offset,
+                        end_offset=match_stack[-1].end_offset,
+                        source=source,
+                        children=list(match_stack)
+                    )
+
+                backtracking_count += 1
+                if self._BACKTRACKING_LIMIT is not None and backtracking_count >= self._BACKTRACKING_LIMIT:
+                    raise BacktrackingLimitReachedError(
+                        rule_name=self.node.name,
+                        source=source,
+                        offset=match_stack[-1].end_offset,
+                        count=backtracking_count,
+                        limit=self._BACKTRACKING_LIMIT
+                    )
+
+                if match_stack:
+                    match_stack.pop()
+
+                continue
+
+            # Add the possibly still-yielding iterator back to the queue.
+            queue.append(current_iterator)
+
+            match_stack.append(iteration_match_node)
+
+            if len(match_stack) == self.max_value or iteration_match_node.end_offset == len(source):
+                yield MatchNode(
                     name=self.name,
                     start_offset=offset,
                     end_offset=iteration_match_node.end_offset,
                     source=source,
                     children=list(match_stack)
                 )
-
-                if len(match_stack) == self.max_value or match_node.end_offset == len(source):
-                    yield match_node
-                    match_stack.pop()
-                    continue
-                else:
-                    yield from offset_iterator(iteration_offset=match_node.end_offset)
-                    if len(match_stack) >= self.min_value:
-                        yield match_node
-                    match_stack.pop()
-
-                    nonlocal backtracking_count
-                    backtracking_count += 1
-                    if self._BACKTRACKING_LIMIT is not None and backtracking_count >= self._BACKTRACKING_LIMIT:
-                        raise BacktrackingLimitReachedError(
-                            rule_name=self.node.name,
-                            source=source,
-                            offset=iteration_offset,
-                            count=backtracking_count,
-                            limit=self._BACKTRACKING_LIMIT
-                        )
-
-        yield from offset_iterator(iteration_offset=offset)
+                match_stack.pop()
+            else:
+                queue.append(self.node._evaluate(source=source, offset=iteration_match_node.end_offset))
 
         if self.min_value == 0:
             yield MatchNode(
