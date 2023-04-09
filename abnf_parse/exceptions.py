@@ -25,3 +25,9 @@ class BacktrackingLimitReachedError(ABNFParseError):
         self.offset = offset
         self.count = count
         self.limit = limit
+
+
+class RuleNotFoundError(Exception):
+    def __init__(self, rule_name: str):
+        super().__init__(f'The referenced rule was not found: {rule_name}')
+        self.rule_name = rule_name

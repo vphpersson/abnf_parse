@@ -26,7 +26,7 @@ class EvaluationNode(ABC):
         """
         Evaluate if the input matches the grammar as constituted by the current node, which represents a tree.
 
-        The input is operated on as a `memoryview` in order to avoid copies when passing and reading it.
+        The input is operated on as a `memoryview` in order to avoid copies.
 
         :param source: The input to be evaluated.
         :param offset: The offset at which to start reading the input.

@@ -202,7 +202,7 @@ def _initialize_abnf_ruleset():
     )
 
     # The `alternation` rule is defined in terms of itself (alternation -> concatenation -> element -> group/option).
-    # Therefore, little trickery is needed to make it work (temporarily assign `Node` in place of the `alternation`
+    # Therefore, little trickery is needed to make it work (temporarily assign `None` in place of the `alternation`
     # evaluation node, then swap the `None` value with the node once it has been defined).
     # (?TODO: Incorporate some kind of lazy lookup? Seems advanced.)
 
