@@ -1,0 +1,4 @@
+[project]
+name = "abnf_parse"
+version = "0.62"
+dependencies = []
